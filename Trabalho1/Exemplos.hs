@@ -47,11 +47,32 @@ receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
 receituario2 :: Receituario
 receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
 
+receituarioErrado1 :: Receituario
+receituarioErrado1 = [(m1,[8,17]),(m2,[6]),(m3,[22,22]), (m4,[8,22,23])]
+
+receituarioErrado2 :: Receituario
+receituarioErrado2 = [(m1,[8,17]),(m2,[6]),(m3,[22]),(m3,[33])]
+
+receituarioErrado3 :: Receituario
+receituarioErrado3 = [(m1,[8,17]),(m2,[6]),(m3,[22]),(m3,[22])]
+
+receituarioErrado4 :: Receituario
+receituarioErrado4 = [(m1,[8,17]),(m2,[6]),(m6,[22]), (m4,[8,22,23])]
+
+receituarioErrado5 :: Receituario
+receituarioErrado5 = [(m1,[8,17]),(m2,[6]),(m3,[23,22]), (m4,[8,22,23])]
+
 plano1 :: PlanoMedicamento
 plano1 = [(6,[m2]),(8,[m1]),(17,[m1]),(22,[m3])]
 
 plano2 :: PlanoMedicamento
 plano2 = [(6,[m2]),(8,[m1,m4]),(17,[m1]),(22,[m3,m4]), (23,[m4])] :: [(Int, [String])]
+
+planoInvalido1 :: PlanoMedicamento
+planoInvalido1 = [(6,[m2]),(8,[m1]),(8,[m1]),(22,[m3])]
+
+planoInvalido2 :: PlanoMedicamento
+planoInvalido2 = [(6,[m2]),(8,[m1, m6]),(17,[m1]),(22,[m3])]
 
 plantao1 :: Plantao
 plantao1 = [(6,[Medicar m2])
@@ -96,6 +117,14 @@ plantaoInvalido4 = [(6, [Medicar m2])
                    ,(22, [Medicar m3, Medicar m4])
                    ,(23, [Medicar m4])
                    ]
+
+-- Medicar não está ordenada em ordem alfabetica
+plantaoInvalido5 :: Plantao
+plantaoInvalido5 = [(6,[Medicar m2, Medicar m8])
+                   ,(8,[Medicar m1, Medicar m9])
+                   ,(17,[Medicar m1, Comprar m1 30])
+                   ,(22,[Medicar m3])]
+
 
 -- testando comprarMedicamento
 casoTeste1 = comprarMedicamento m3 30 estoque1 == [(m1,10), (m2,5), (m3,30)]

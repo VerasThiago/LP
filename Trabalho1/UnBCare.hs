@@ -37,8 +37,25 @@ Caso o remédio ainda não exista no estoque, o novo estoque a ser retornado dev
 
 -}
 
+existeMedicamento :: Medicamento -> EstoqueMedicamentos -> Bool
+existeMedicamento m [] = False
+existeMedicamento m ((med,qnt):tail)
+    | med == m = True
+    | otherwise = existeMedicamento m tail
+
+adicionarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
+adicionarMedicamento medIn qntIn ((med,qnt):tail)
+    | medIn == med = ( (med, qnt + qntIn) : tail)
+    | otherwise = (med,qnt) : adicionarMedicamento medIn qntIn tail
+
 comprarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
-comprarMedicamento = undefined
+comprarMedicamento med qnt est = 
+    if est == [] 
+    then [(med, qnt)]
+    else 
+        if existeMedicamento med est 
+        then adicionarMedicamento med qnt est 
+        else (med, qnt):est
 
 
 {-
@@ -51,8 +68,23 @@ onde v é o novo estoque.
 
 -}
 
+consumir1Unidade :: Medicamento -> EstoqueMedicamentos -> EstoqueMedicamentos
+consumir1Unidade medIn ((med,qnt):tail)
+    | medIn == med = ((med, qnt - 1) : tail)
+    | otherwise = (med,qnt) : consumir1Unidade medIn tail
+
+
+quantidadeMedicamento :: Medicamento -> EstoqueMedicamentos -> Int
+quantidadeMedicamento m [] = 0
+quantidadeMedicamento m ((med,qnt):tail)
+    | med == m = qnt
+    | otherwise = quantidadeMedicamento m tail
+
 tomarMedicamento :: Medicamento -> EstoqueMedicamentos -> Maybe EstoqueMedicamentos
-tomarMedicamento = undefined
+tomarMedicamento medIn ((med, qnt):tail)
+    | quantidadeMedicamento medIn ((med, qnt):tail) > 0 = Just (consumir1Unidade medIn ((med, qnt):tail))
+    | otherwise = Nothing
+
 
 
 {-
@@ -64,8 +96,10 @@ Se o medicamento não existir, retorne 0.
 
 -}
 
+
 consultarMedicamento :: Medicamento -> EstoqueMedicamentos -> Quantidade
-consultarMedicamento = undefined
+consultarMedicamento med est = quantidadeMedicamento med est
+
 
 
 {-
@@ -81,9 +115,16 @@ consultarMedicamento = undefined
 
 -}
 
-demandaMedicamentos :: Receituario -> EstoqueMedicamentos
-demandaMedicamentos = undefined
+quickSort [] = []
+quickSort (a:as) = quickSort [e | e <- as, e < a] ++ [a] ++ quickSort [e | e <- as, e >= a]
 
+tamanhoLista :: [Int] -> Int
+tamanhoLista [] = 0
+tamanhoLista (num:tail) = 1 + tamanhoLista tail
+
+demandaMedicamentos :: Receituario -> EstoqueMedicamentos
+demandaMedicamentos [] = []
+demandaMedicamentos ((med, hor):tail) = quickSort( (med, tamanhoLista hor) : demandaMedicamentos tail)
 
 {-
    QUESTÃO 5  VALOR: 1,0 ponto, sendo 0,5 para cada função.
@@ -98,11 +139,45 @@ demandaMedicamentos = undefined
 
  -}
 
+quickSort2 [] = []
+quickSort2 (a:as) = quickSort2 [e | e <- as, e < a] ++ [a] ++ quickSort2 [e | e <- as, e > a]
+
+pegaMedicamentos :: Receituario -> [String]
+pegaMedicamentos [] = []
+pegaMedicamentos ((med, hor):tail) = med : pegaMedicamentos tail
+
+checkReceituario :: Receituario -> Bool
+checkReceituario _receituario = pegaMedicamentos _receituario == quickSort2 (pegaMedicamentos _receituario)
+
+checkHorario :: Receituario -> Bool
+checkHorario [] = True
+checkHorario ((med, hor):tail)
+    | quickSort2 hor == hor = checkHorario tail
+    | otherwise = False
+
 receituarioValido :: Receituario -> Bool
-receituarioValido = undefined
+receituarioValido rece = checkReceituario rece && checkHorario rece
+
+checkMedPlano :: PlanoMedicamento -> Bool
+checkMedPlano [] = True
+checkMedPlano ((_hor, _meds):tail) 
+    | quickSort2 _meds == _meds = checkMedPlano tail
+    | otherwise = False
+
+pegaHor :: PlanoMedicamento -> [Int]
+pegaHor [] = []
+pegaHor ((hor, med):tail) = hor : pegaHor tail
+
+checkPlanoHorario :: PlanoMedicamento -> Bool
+checkPlanoHorario _plano = quickSort2 (pegaHor _plano) == pegaHor _plano
 
 planoValido :: PlanoMedicamento -> Bool
-planoValido = undefined
+planoValido _plano = 
+    and 
+    [
+        checkPlanoHorario _plano,
+        checkMedPlano _plano
+    ]
 
 
 {-
@@ -116,11 +191,63 @@ planoValido = undefined
  3. Para cada horário, as ocorrências de Medicar estão ordenadas lexicograficamente.
 
  Defina a função "plantaoValido" que verifica as propriedades acima e cujo tipo é dado abaixo:
+    
+    plantao1 :: Plantao
+    plantao1 = [
+            (6,[Medicar m2])
+           ,(8,[Medicar m1])
+           ,(17,[Medicar m1])
+           ,(22,[Medicar m3])
+           ]
 
  -}
 
+
+existe a [] = False
+existe a (num:tail)
+    | a == num = True
+    | otherwise = existe a tail
+
+checkRepetidos [] [] = False
+checkRepetidos a [] = False
+checkRepetidos [] b = False
+checkRepetidos (num:tail) b
+    | existe num b = True
+    | otherwise = checkRepetidos tail b
+
+pegaMedicar [] = []
+pegaMedicar (acao:tail) = case acao of
+    Medicar med -> med : pegaMedicar tail
+    _ -> pegaMedicar tail
+
+pegaComprar [] = []
+pegaComprar (acao:tail) = case acao of
+    Comprar med qnt -> med : pegaComprar tail
+    _ -> pegaComprar tail
+
+checkMedicar [] = True
+checkMedicar ((hor, acao):tail)
+    | pegaMedicar acao == quickSort2(pegaMedicar acao) = checkMedicar tail
+    | otherwise = False
+
+checkMedicarComprar [] = True
+checkMedicarComprar ((hor, acao):tail)
+    | checkRepetidos (pegaMedicar acao) (pegaComprar acao) = False
+    | otherwise = checkMedicarComprar tail
+
+pegaHorarios [] = []
+pegaHorarios ((hor, acao):tail) = hor : pegaHorarios tail
+
+checkHorarios _plantao = quickSort2 (pegaHorarios _plantao) == pegaHorarios _plantao
+    
 plantaoValido :: Plantao -> Bool
-plantaoValido = undefined
+plantaoValido _plantao = 
+    and
+    [
+        checkHorarios _plantao,
+        checkMedicarComprar _plantao,
+        checkMedicar _plantao
+    ]
 
 
 {-
@@ -134,8 +261,41 @@ plantaoValido = undefined
 
 -}
 
+existeHorario :: Int -> PlanoMedicamento -> Bool
+existeHorario _ [] = False
+existeHorario _horario ((hor, medicamentos):tail)
+    | _horario == hor = True
+    | otherwise = existeHorario _horario tail
+
+insereNoPlano :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
+insereNoPlano _horario _medicamento ((hor, medicamentos) : tail)
+    | _horario == hor = ( (hor, quickSort2(_medicamento : medicamentos) ) : tail )
+    | otherwise = (hor, medicamentos) : ( insereNoPlano _horario _medicamento tail )
+
+adicionaNoPlano :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
+adicionaNoPlano _horario _medicamento _plano
+    | existeHorario _horario _plano = insereNoPlano _horario _medicamento _plano
+    | otherwise = quickSort2( (_horario, [_medicamento]) : _plano )
+
+    -- receituario1 :: Receituario
+    -- receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
+
+    -- plano1 :: PlanoMedicamento
+    -- plano1 = [(6,[m2]),(8,[m1]),(17,[m1]),(22,[m3])]
+
+iteraHorariosPlano :: Medicamento -> [Int] -> PlanoMedicamento
+iteraHorariosPlano _ [] = []
+iteraHorariosPlano _medicamento (_horario:tail) = adicionaNoPlano _horario _medicamento (iteraHorariosPlano _medicamento tail)
+
+
+
+
 geraPlanoReceituario :: Receituario -> PlanoMedicamento
-geraPlanoReceituario = undefined
+geraPlanoReceituario [] = []
+geraPlanoReceituario ((_medicamento, _horarios):tail) =
+    iteraHorariosPlano _medicamento _horarios ++ geraPlanoReceituario tail
+    
+    
 
 
 {- QUESTÃO 8  VALOR: 1,0 ponto
