@@ -45,7 +45,13 @@ receituario1 :: Receituario
 receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
 
 receituario2 :: Receituario
-receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
+receituario2 = [(m1,[8,17]), (m2,[6]), (m4,[22]), (m3,[8,22,23])]
+
+receituario3 :: Receituario
+receituario3 = [(m4,[8,22,23]), (m1,[8,17]), (m2,[6]), (m3,[22])]
+
+receituario4 :: Receituario
+receituario4 = [(m1,[8,17]), (m4,[8,22,23]), (m2,[6]), (m3,[22])]
 
 receituarioErrado1 :: Receituario
 receituarioErrado1 = [(m1,[8,17]),(m2,[6]),(m3,[22,22]), (m4,[8,22,23])]

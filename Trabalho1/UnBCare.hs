@@ -267,36 +267,62 @@ existeHorario _horario ((hor, medicamentos):tail)
     | _horario == hor = True
     | otherwise = existeHorario _horario tail
 
-insereNoPlano :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
-insereNoPlano _horario _medicamento ((hor, medicamentos) : tail)
+adicionaNoPlanoAux :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
+adicionaNoPlanoAux _horario _medicamento ((hor, medicamentos) : tail)
     | _horario == hor = ( (hor, quickSort2(_medicamento : medicamentos) ) : tail )
-    | otherwise = (hor, medicamentos) : ( insereNoPlano _horario _medicamento tail )
+    | otherwise = (hor, medicamentos) : ( adicionaNoPlanoAux _horario _medicamento tail )
 
 adicionaNoPlano :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
 adicionaNoPlano _horario _medicamento _plano
-    | existeHorario _horario _plano = insereNoPlano _horario _medicamento _plano
+    | existeHorario _horario _plano = adicionaNoPlanoAux _horario _medicamento _plano
     | otherwise = quickSort2( (_horario, [_medicamento]) : _plano )
 
     -- receituario1 :: Receituario
     -- receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
 
+    -- receituario2 :: Receituario
+    -- receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
+
     -- plano1 :: PlanoMedicamento
     -- plano1 = [(6,[m2]),(8,[m1]),(17,[m1]),(22,[m3])]
 
-iteraHorariosPlano :: Medicamento -> [Int] -> PlanoMedicamento
-iteraHorariosPlano _ [] = []
-iteraHorariosPlano _medicamento (_horario:tail) = adicionaNoPlano _horario _medicamento (iteraHorariosPlano _medicamento tail)
+    -- plano2 = [(6,[m2]),(8,[m1,m4]),(17,[m1]),(22,[m3,m4]), (23,[m4])]
+
+pegaHorariosReceituario :: Receituario -> [Int]
+pegaHorariosReceituario [] = []
+pegaHorariosReceituario ((_medicamento, _horarios): tail) = 
+    quickSort2 (_horarios ++ pegaHorariosReceituario  tail)
+
+pegaPlanoBase :: [Int] -> PlanoMedicamento
+pegaPlanoBase [] = []
+pegaPlanoBase (_horario: tail) =
+    (_horario, []) : pegaPlanoBase tail
+
+insereReceituarioNoPlano :: Receituario -> PlanoMedicamento -> PlanoMedicamento
+insereReceituarioNoPlano [] _plano = _plano
+insereReceituarioNoPlano ( ( _med, [] ) : tailReceituario ) _plano = insereReceituarioNoPlano tailReceituario _plano
+insereReceituarioNoPlano ( ( _med, ( _hor : tailHorario ) ) : tailReceituario) _plano = do
+    let _planoBase = adicionaNoPlano _hor _med _plano
+    insereReceituarioNoPlano ( ( _med, tailHorario ) : tailReceituario ) _planoBase
 
 
-
+-- receituario2 :: Receituario
+-- receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
 
 geraPlanoReceituario :: Receituario -> PlanoMedicamento
-geraPlanoReceituario [] = []
-geraPlanoReceituario ((_medicamento, _horarios):tail) =
-    iteraHorariosPlano _medicamento _horarios ++ geraPlanoReceituario tail
+geraPlanoReceituario _receituario = do
+        let _horarioBase = pegaHorariosReceituario _receituario
+        let _planoBase = pegaPlanoBase _horarioBase
+        insereReceituarioNoPlano _receituario _planoBase
+        -- [(1, ["vsf"])]
     
     
-
+mergePlanos :: PlanoMedicamento -> PlanoMedicamento -> PlanoMedicamento
+mergePlanos a [] = a
+mergePlanos [] b = b
+mergePlanos _planoA ( ( _horario, ( _medicamento : tailMedicamento ) ) : tail ) = do
+    let aux = adicionaNoPlano _horario _medicamento _planoA
+    mergePlanos aux tail
 
 {- QUESTÃO 8  VALOR: 1,0 ponto
 
