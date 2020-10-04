@@ -192,14 +192,6 @@ planoValido _plano =
 
  Defina a função "plantaoValido" que verifica as propriedades acima e cujo tipo é dado abaixo:
     
-    plantao1 :: Plantao
-    plantao1 = [
-            (6,[Medicar m2])
-           ,(8,[Medicar m1])
-           ,(17,[Medicar m1])
-           ,(22,[Medicar m3])
-           ]
-
  -}
 
 
@@ -261,32 +253,10 @@ plantaoValido _plantao =
 
 -}
 
-existeHorario :: Int -> PlanoMedicamento -> Bool
-existeHorario _ [] = False
-existeHorario _horario ((hor, medicamentos):tail)
-    | _horario == hor = True
-    | otherwise = existeHorario _horario tail
-
-adicionaNoPlanoAux :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
-adicionaNoPlanoAux _horario _medicamento ((hor, medicamentos) : tail)
-    | _horario == hor = ( (hor, quickSort2(_medicamento : medicamentos) ) : tail )
-    | otherwise = (hor, medicamentos) : ( adicionaNoPlanoAux _horario _medicamento tail )
-
 adicionaNoPlano :: Int -> Medicamento -> PlanoMedicamento -> PlanoMedicamento
-adicionaNoPlano _horario _medicamento _plano
-    | existeHorario _horario _plano = adicionaNoPlanoAux _horario _medicamento _plano
-    | otherwise = quickSort2( (_horario, [_medicamento]) : _plano )
-
-    -- receituario1 :: Receituario
-    -- receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
-
-    -- receituario2 :: Receituario
-    -- receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
-
-    -- plano1 :: PlanoMedicamento
-    -- plano1 = [(6,[m2]),(8,[m1]),(17,[m1]),(22,[m3])]
-
-    -- plano2 = [(6,[m2]),(8,[m1,m4]),(17,[m1]),(22,[m3,m4]), (23,[m4])]
+adicionaNoPlano _horario _medicamento ((hor, medicamentos) : tail)
+    | _horario == hor = ( (hor, quickSort2(_medicamento : medicamentos) ) : tail )
+    | otherwise = (hor, medicamentos) : ( adicionaNoPlano _horario _medicamento tail )
 
 pegaHorariosReceituario :: Receituario -> [Int]
 pegaHorariosReceituario [] = []
@@ -305,24 +275,11 @@ insereReceituarioNoPlano ( ( _med, ( _hor : tailHorario ) ) : tailReceituario) _
     let _planoBase = adicionaNoPlano _hor _med _plano
     insereReceituarioNoPlano ( ( _med, tailHorario ) : tailReceituario ) _planoBase
 
-
--- receituario2 :: Receituario
--- receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
-
 geraPlanoReceituario :: Receituario -> PlanoMedicamento
 geraPlanoReceituario _receituario = do
         let _horarioBase = pegaHorariosReceituario _receituario
         let _planoBase = pegaPlanoBase _horarioBase
         insereReceituarioNoPlano _receituario _planoBase
-        -- [(1, ["vsf"])]
-    
-    
-mergePlanos :: PlanoMedicamento -> PlanoMedicamento -> PlanoMedicamento
-mergePlanos a [] = a
-mergePlanos [] b = b
-mergePlanos _planoA ( ( _horario, ( _medicamento : tailMedicamento ) ) : tail ) = do
-    let aux = adicionaNoPlano _horario _medicamento _planoA
-    mergePlanos aux tail
 
 {- QUESTÃO 8  VALOR: 1,0 ponto
 
@@ -334,8 +291,33 @@ mergePlanos _planoA ( ( _horario, ( _medicamento : tailMedicamento ) ) : tail ) 
 
 -}
 
+adicionaNoReceituario :: Medicamento -> Int -> Receituario -> Receituario
+adicionaNoReceituario _medicamento _horario ((_med, _horarios) : tail)
+    | _medicamento == _med = ( (_med, quickSort2(_horario : _horarios) ) : tail )
+    | otherwise = (_med, _horarios) : ( adicionaNoReceituario _medicamento _horario tail )
+
+pegaMedicamentosPlano :: [(Int, [String])] -> [String]
+pegaMedicamentosPlano [] = []
+pegaMedicamentosPlano ((_hor, _medicamentos):tail) = 
+    quickSort2(_medicamentos ++ pegaMedicamentosPlano tail)
+
+pegaReceituarioBase :: [String] -> Receituario
+pegaReceituarioBase [] = []
+pegaReceituarioBase (_medicamento:tail) =
+    (_medicamento, []) : pegaReceituarioBase tail
+
+inserePlanoNoReceituario :: PlanoMedicamento -> Receituario -> Receituario
+inserePlanoNoReceituario [] _receituario = _receituario
+inserePlanoNoReceituario ( ( _horario, [] ) : tailPlano ) _receituario = inserePlanoNoReceituario tailPlano _receituario
+inserePlanoNoReceituario ( ( _horario, ( _medicamento : tailMedicamento ) ) : tailPlano) _receituario = do
+    let _receituarioBase = adicionaNoReceituario _medicamento _horario _receituario
+    inserePlanoNoReceituario ( ( _horario, tailMedicamento ) : tailPlano ) _receituarioBase
+
 geraReceituarioPlano :: PlanoMedicamento -> Receituario
-geraReceituarioPlano = undefined
+geraReceituarioPlano _plano = do
+    let _medicamentosBase = pegaMedicamentosPlano _plano
+    let _receituarioBase = pegaReceituarioBase _medicamentosBase
+    inserePlanoNoReceituario _plano _receituarioBase
 
 
 {-  QUESTÃO 9 VALOR: 1,0 ponto
@@ -347,9 +329,34 @@ deve ser Just v, onde v é o valor final do estoque de medicamentos
 
 -}
 
-executaPlantao :: Plantao -> EstoqueMedicamentos -> Maybe EstoqueMedicamentos
-executaPlantao = undefined
+addMedicamento :: Medicamento -> Int -> EstoqueMedicamentos -> EstoqueMedicamentos
+addMedicamento _med _qnt [] = [(_med, _qnt)]
+addMedicamento _medicamento _val ((_med, _qnt):tail)
+    | _medicamento == _med = ( (_med, _qnt + _val) : tail )
+    | otherwise = ( (_med, _qnt) : addMedicamento _medicamento _val tail)
 
+checkEstoque :: EstoqueMedicamentos -> Bool
+checkEstoque [] = True
+checkEstoque ( ( _med, _qnt ) : tail ) = _qnt >= 0 && checkEstoque tail
+
+executaPlantaoAux :: Plantao -> EstoqueMedicamentos -> EstoqueMedicamentos
+executaPlantaoAux [] _estoque = _estoque
+executaPlantaoAux ( ( _horario, [] ) : tailPlantao ) _estoque = (executaPlantaoAux tailPlantao _estoque)
+executaPlantaoAux ( ( _horario, ( acao : tailAcao ) ) : tailPlantao) _estoque = case acao of 
+    Medicar _med -> do
+        let _novoEstoque = (addMedicamento _med (-1) _estoque)
+        if checkEstoque _novoEstoque then executaPlantaoAux ( ( _horario, tailAcao  ) : tailPlantao) _novoEstoque
+        else [("Invalido", -1)]
+    Comprar _med _qnt -> do
+        let _novoEstoque = (addMedicamento _med _qnt _estoque)
+        if checkEstoque _novoEstoque then executaPlantaoAux ( ( _horario, tailAcao  ) : tailPlantao) _novoEstoque
+        else [("Invalido", -1)]
+
+executaPlantao :: Plantao -> EstoqueMedicamentos -> Maybe EstoqueMedicamentos
+executaPlantao _plantao _estoque = do
+    let result = executaPlantaoAux _plantao _estoque
+    if result == [("Invalido", -1)] then Nothing
+    else Just result
 
 {-
 QUESTÃO 10 VALOR: 1,0 ponto
@@ -361,11 +368,27 @@ Dica: fazer correspondencia entre os remédios previstos no plano e os ministrad
 Note que alguns cuidados podem ser comprar medicamento e que eles podem ocorrer sozinhos em certo horário ou
 juntamente com ministrar medicamento.
 
+-- plantaoValido0 :: Plantao
+-- plantaoValido0 = [(6,[Medicar m2, Medicar m8])
+--            ,(8,[Medicar m9, Medicar m1])
+--            ,(17,[Medicar m1, Comprar m3 30])
+--            ,(22,[Medicar m3])]
+
+-- estoque1 = [(m1,10), (m2,5), (m3,0)]
+
+plano2 :: PlanoMedicamento
+plano2 = [(6,[m2]),(8,[m1,m3]),(17,[m1]),(22,[m3,m4]), (23,[m3])]
+
+-- adicionarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
+-- consumir1Unidade :: Medicamento -> EstoqueMedicamentos -> EstoqueMedicamentos
+
 -}
 
 satisfaz :: Plantao -> PlanoMedicamento -> EstoqueMedicamentos  -> Bool
-satisfaz = undefined
-
+satisfaz _plantao _plano _estoque = 
+    and[
+        not (executaPlantao _plantao _estoque == Nothing)
+    ]
 
 {-
 
