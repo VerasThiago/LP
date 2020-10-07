@@ -38,23 +38,21 @@ Caso o remédio ainda não exista no estoque, o novo estoque a ser retornado dev
 -}
 
 existeMedicamento :: Medicamento -> EstoqueMedicamentos -> Bool
-existeMedicamento m [] = False
-existeMedicamento m ((med,qnt):tail)
-    | med == m = True
-    | otherwise = existeMedicamento m tail
+existeMedicamento _ [] = False
+existeMedicamento _med ((med,qnt):tail)
+    | med == _med = True
+    | otherwise = existeMedicamento _med tail
 
 adicionarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
-adicionarMedicamento medIn qntIn ((med,qnt):tail)
-    | medIn == med = ( (med, qnt + qntIn) : tail)
-    | otherwise = (med,qnt) : adicionarMedicamento medIn qntIn tail
+adicionarMedicamento _med qntIn ( (med,qnt) : tail )
+    | _med == med = ( (med, qnt + qntIn) : tail)
+    | otherwise = (med,qnt) : adicionarMedicamento _med qntIn tail
 
 comprarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
-comprarMedicamento med qnt est = 
-    if est == [] 
-    then [(med, qnt)]
-    else 
-        if existeMedicamento med est 
-        then adicionarMedicamento med qnt est 
+comprarMedicamento med qnt est 
+    | est == [] = [(med, qnt)]
+    | otherwise = do
+        if existeMedicamento med est then adicionarMedicamento med qnt est 
         else (med, qnt):est
 
 
@@ -69,20 +67,21 @@ onde v é o novo estoque.
 -}
 
 consumir1Unidade :: Medicamento -> EstoqueMedicamentos -> EstoqueMedicamentos
-consumir1Unidade medIn ((med,qnt):tail)
-    | medIn == med = ((med, qnt - 1) : tail)
-    | otherwise = (med,qnt) : consumir1Unidade medIn tail
+consumir1Unidade _med ((med,qnt):tail)
+    | _med == med = ((med, qnt - 1) : tail)
+    | otherwise = (med,qnt) : consumir1Unidade _med tail
 
 
 quantidadeMedicamento :: Medicamento -> EstoqueMedicamentos -> Int
-quantidadeMedicamento m [] = 0
-quantidadeMedicamento m ((med,qnt):tail)
-    | med == m = qnt
-    | otherwise = quantidadeMedicamento m tail
+quantidadeMedicamento _med [] = 0
+quantidadeMedicamento _med ( (med,qnt) : tail )
+    | _med == med = qnt
+    | otherwise = quantidadeMedicamento _med tail
 
 tomarMedicamento :: Medicamento -> EstoqueMedicamentos -> Maybe EstoqueMedicamentos
-tomarMedicamento medIn ((med, qnt):tail)
-    | quantidadeMedicamento medIn ((med, qnt):tail) > 0 = Just (consumir1Unidade medIn ((med, qnt):tail))
+tomarMedicamento _med [] = Nothing
+tomarMedicamento _med ((med, qnt):tail)
+    | quantidadeMedicamento _med ((med, qnt):tail) > 0 = Just (consumir1Unidade _med ((med, qnt):tail))
     | otherwise = Nothing
 
 
@@ -96,11 +95,8 @@ Se o medicamento não existir, retorne 0.
 
 -}
 
-
 consultarMedicamento :: Medicamento -> EstoqueMedicamentos -> Quantidade
 consultarMedicamento med est = quantidadeMedicamento med est
-
-
 
 {-
    QUESTÃO 4  VALOR: 1,0 ponto
@@ -372,7 +368,10 @@ juntamente com ministrar medicamento.
 
 plantaoPlano :: Plantao -> PlanoMedicamento
 plantaoPlano [] = []
-plantaoPlano ( (_horario, _acao) : tail ) = ( _horario, pegaMedicar _acao ) : plantaoPlano tail
+plantaoPlano ( (_horario, _acao) : tail ) = do
+    let medicar = pegaMedicar _acao
+    if medicar == [] then plantaoPlano tail
+    else  ( _horario, medicar ) : plantaoPlano tail
 
 satisfaz :: Plantao -> PlanoMedicamento -> EstoqueMedicamentos  -> Bool
 satisfaz _plantao _plano _estoque = 
