@@ -368,26 +368,17 @@ Dica: fazer correspondencia entre os remédios previstos no plano e os ministrad
 Note que alguns cuidados podem ser comprar medicamento e que eles podem ocorrer sozinhos em certo horário ou
 juntamente com ministrar medicamento.
 
--- plantaoValido0 :: Plantao
--- plantaoValido0 = [(6,[Medicar m2, Medicar m8])
---            ,(8,[Medicar m9, Medicar m1])
---            ,(17,[Medicar m1, Comprar m3 30])
---            ,(22,[Medicar m3])]
-
--- estoque1 = [(m1,10), (m2,5), (m3,0)]
-
-plano2 :: PlanoMedicamento
-plano2 = [(6,[m2]),(8,[m1,m3]),(17,[m1]),(22,[m3,m4]), (23,[m3])]
-
--- adicionarMedicamento :: Medicamento -> Quantidade -> EstoqueMedicamentos -> EstoqueMedicamentos
--- consumir1Unidade :: Medicamento -> EstoqueMedicamentos -> EstoqueMedicamentos
-
 -}
+
+plantaoPlano :: Plantao -> PlanoMedicamento
+plantaoPlano [] = []
+plantaoPlano ( (_horario, _acao) : tail ) = ( _horario, pegaMedicar _acao ) : plantaoPlano tail
 
 satisfaz :: Plantao -> PlanoMedicamento -> EstoqueMedicamentos  -> Bool
 satisfaz _plantao _plano _estoque = 
     and[
-        not (executaPlantao _plantao _estoque == Nothing)
+        not (executaPlantao _plantao _estoque == Nothing),
+        plantaoPlano _plantao == _plano
     ]
 
 {-
@@ -400,6 +391,34 @@ QUESTÃO 11 (EXTRA) VALOR: 1,0 ponto
 
 -}
 
-plantaoCorreto :: PlanoMedicamento ->  EstoqueMedicamentos  -> Plantao
-plantaoCorreto = undefined
+executaMedicar :: [Cuidado] -> EstoqueMedicamentos -> EstoqueMedicamentos
+executaMedicar [] _estoque = _estoque
+executaMedicar (_meds:tail) _estoque = case _meds of
+    Medicar _meds -> executaMedicar tail (addMedicamento _meds (-1) _estoque)
 
+criaListaMedicar :: [Medicamento] -> [Cuidado]
+criaListaMedicar [] = []
+criaListaMedicar (med : tail) = Medicar med : criaListaMedicar tail
+
+criaListaComprar :: EstoqueMedicamentos -> [Cuidado]
+criaListaComprar [] = []
+criaListaComprar ( (_med , qnt) : tail )
+    | qnt >= 0 = criaListaComprar tail
+    | otherwise = (Comprar _med (-qnt)) : criaListaComprar tail
+
+concertaEstoque :: EstoqueMedicamentos -> EstoqueMedicamentos
+concertaEstoque [] = []
+concertaEstoque ( (_med , qnt) : tail )
+    | qnt >= 0 = (_med , qnt) : concertaEstoque tail
+    | otherwise = (_med , 0) : concertaEstoque tail
+ 
+plantaoCorreto :: PlanoMedicamento ->  EstoqueMedicamentos  -> Plantao
+plantaoCorreto [] _ = []
+plantaoCorreto ((_hor, _meds):tail)  _estoque = do
+    let _acaoMedicar = criaListaMedicar _meds
+    let _estoqueLinha = executaMedicar _acaoMedicar []
+    let _estoqueAux = executaMedicar _acaoMedicar _estoque
+    let _acaoComprar = criaListaComprar _estoqueAux
+    let _acaoResult = _acaoComprar ++ _acaoMedicar
+    let _estoqueArrumado = concertaEstoque _estoqueAux
+    (_hor, _acaoResult) : plantaoCorreto tail _estoqueArrumado
