@@ -2,6 +2,7 @@ module Exemplos where
 
 import ModeloDados
 import UnBCare
+import MeusTestes
 
 -- Declarações
 
@@ -41,47 +42,17 @@ estoque2 = [(m1,10), (m2,5), (m3,10)]
 estoque3 :: EstoqueMedicamentos
 estoque3 = [(m1,10), (m2,50), (m3,10), (m4, 20)]
 
-estoque4 :: EstoqueMedicamentos
-estoque4 = [(m1,10), (m2,50), (m3,10), (m8, 20), (m9, 20)]
-
 receituario1 :: Receituario
 receituario1 = [(m1,[8,17]),(m2,[6]),(m3,[22])]
 
 receituario2 :: Receituario
-receituario2 = [(m1,[8,17]), (m2,[6]), (m4,[22]), (m3,[8,22,23])]
-
-receituario3 :: Receituario
-receituario3 = [(m4,[8,22,23]), (m1,[8,17]), (m2,[6]), (m3,[22])]
-
-receituario4 :: Receituario
-receituario4 = [(m1,[8,17]), (m4,[8,22,23]), (m2,[6]), (m3,[22])]
-
-receituarioErrado1 :: Receituario
-receituarioErrado1 = [(m1,[8,17]),(m2,[6]),(m3,[22,22]), (m4,[8,22,23])]
-
-receituarioErrado2 :: Receituario
-receituarioErrado2 = [(m1,[8,17]),(m2,[6]),(m3,[22]),(m3,[33])]
-
-receituarioErrado3 :: Receituario
-receituarioErrado3 = [(m1,[8,17]),(m2,[6]),(m3,[22]),(m3,[22])]
-
-receituarioErrado4 :: Receituario
-receituarioErrado4 = [(m1,[8,17]),(m2,[6]),(m6,[22]), (m4,[8,22,23])]
-
-receituarioErrado5 :: Receituario
-receituarioErrado5 = [(m1,[8,17]),(m2,[6]),(m3,[23,22]), (m4,[8,22,23])]
+receituario2 = [(m1,[8,17]),(m2,[6]),(m3,[22]), (m4,[8,22,23])]
 
 plano1 :: PlanoMedicamento
 plano1 = [(6,[m2]),(8,[m1]),(17,[m1]),(22,[m3])]
 
 plano2 :: PlanoMedicamento
-plano2 = [(6,[m2]),(8,[m1,m3]),(17,[m1]),(22,[m3,m4]), (23,[m3])]
-
-planoInvalido1 :: PlanoMedicamento
-planoInvalido1 = [(6,[m2]),(8,[m1]),(8,[m1]),(22,[m3])]
-
-planoInvalido2 :: PlanoMedicamento
-planoInvalido2 = [(6,[m2]),(8,[m1, m6]),(17,[m1]),(22,[m3])]
+plano2 = [(6,[m2]),(8,[m1,m4]),(17,[m1]),(22,[m3,m4]), (23,[m4])] :: [(Int, [String])]
 
 plantao1 :: Plantao
 plantao1 = [(6,[Medicar m2])
@@ -100,12 +71,6 @@ plantaoValido0 = [(6,[Medicar m2, Medicar m8])
            ,(8,[Medicar m9, Medicar m1])
            ,(17,[Medicar m1, Comprar m3 30])
            ,(22,[Medicar m3])]
-
-plantaoValido1 :: Plantao
-plantaoValido1 = [(6,[Comprar m2 30, Comprar m8 30])
-           ,(8,[Comprar m9 30, Comprar m1 30])
-           ,(17,[Comprar m1 30, Comprar m3 30])
-           ,(22,[Comprar m3 30])]
 
 plantaoInvalido1 :: Plantao
 plantaoInvalido1 = [(6,[Medicar m2, Medicar m8])
@@ -132,14 +97,6 @@ plantaoInvalido4 = [(6, [Medicar m2])
                    ,(22, [Medicar m3, Medicar m4])
                    ,(23, [Medicar m4])
                    ]
-
--- Medicar não está ordenada em ordem alfabetica
-plantaoInvalido5 :: Plantao
-plantaoInvalido5 = [(6,[Medicar m2, Medicar m8])
-                   ,(8,[Medicar m1, Medicar m9])
-                   ,(17,[Medicar m1, Comprar m1 30])
-                   ,(22,[Medicar m3])]
-
 
 -- testando comprarMedicamento
 casoTeste1 = comprarMedicamento m3 30 estoque1 == [(m1,10), (m2,5), (m3,30)]
