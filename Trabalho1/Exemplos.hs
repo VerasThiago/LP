@@ -2,7 +2,6 @@ module Exemplos where
 
 import ModeloDados
 import UnBCare
-import MeusTestes
 
 -- Declarações
 
