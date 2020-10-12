@@ -114,7 +114,6 @@ consultarMedicamento med est = quantidadeMedicamento med est
 quickSort [] = []
 quickSort (a:as) = quickSort [e | e <- as, e < a] ++ [a] ++ quickSort [e | e <- as, e >= a]
 
-tamanhoLista :: [Int] -> Int
 tamanhoLista [] = 0
 tamanhoLista (num:tail) = 1 + tamanhoLista tail
 
@@ -410,14 +409,28 @@ concertaEstoque [] = []
 concertaEstoque ( (_med , qnt) : tail )
     | qnt >= 0 = (_med , qnt) : concertaEstoque tail
     | otherwise = (_med , 0) : concertaEstoque tail
- 
-plantaoCorreto :: PlanoMedicamento ->  EstoqueMedicamentos  -> Plantao
-plantaoCorreto [] _ = []
-plantaoCorreto ((_hor, _meds):tail)  _estoque = do
+
+geraComprar :: PlanoMedicamento ->  EstoqueMedicamentos -> [Cuidado]
+geraComprar [] _ = []
+geraComprar ((_hor, _meds):tail)  _estoque = do
     let _acaoMedicar = criaListaMedicar _meds
     let _estoqueLinha = executaMedicar _acaoMedicar []
     let _estoqueAux = executaMedicar _acaoMedicar _estoque
     let _acaoComprar = criaListaComprar _estoqueAux
-    let _acaoResult = _acaoComprar ++ _acaoMedicar
     let _estoqueArrumado = concertaEstoque _estoqueAux
-    (_hor, _acaoResult) : plantaoCorreto tail _estoqueArrumado
+    _acaoComprar ++ (geraComprar tail  _estoqueArrumado)
+
+executaPlantaoMeds :: PlanoMedicamento -> Plantao
+executaPlantaoMeds [] = []
+executaPlantaoMeds ((_hor, _meds):tail) = do
+    let _acaoMedicar = criaListaMedicar _meds
+    (_hor, _acaoMedicar) : executaPlantaoMeds tail
+
+
+plantaoCorreto :: PlanoMedicamento ->  EstoqueMedicamentos  -> Plantao
+plantaoCorreto [] _ = []
+plantaoCorreto _plano  _estoque = do
+    let baseMedicar = executaPlantaoMeds _plano
+    let baseComprar = geraComprar _plano _estoque
+    if tamanhoLista baseComprar == 0 then baseMedicar
+    else (0, baseComprar) : baseMedicar
